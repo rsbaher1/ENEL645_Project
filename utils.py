@@ -1,10 +1,43 @@
 # This file contains common functions for data processing independent of the dataset and model used.
+# Not all of these functions are required to be used in the project
 import tensorflow as tf
+import config
 
-log_dir = "./tmp/logs/model1"
-#log_dir = "./tmp/logs/model1_data_aug"
-#log_dir = "./tmp/logs/model2"
-#log_dir = "./tmp/logs/model2_data_aug"
+# Loading Tensorboard Logging dir and file
+log_dir = config.LOG_DIR
+log_file = config.LOG_FILE
+model_name = config.MODEL_NAME
+
+# ------- THE FUNCTIONS BELOW ARE USED IN THIS PROJECT ------- #
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+data_augmentation_flip_rotate = tf.keras.Sequential([
+    tf.keras.layers.experimental.preprocessing.RandomFlip("horizontal_and_vertical"),
+    tf.keras.layers.experimental.preprocessing.RandomRotation(0.2)])
+
+data_scaling_resizing = tf.keras.Sequential([
+    tf.keras.layers.experimental.preprocessing.Resizing(512, 512),
+    tf.keras.layers.experimental.preprocessing.Rescaling(1. / 255)])
+
+early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=20)
+
+monitor_func = tf.keras.callbacks.ModelCheckpoint(model_name, monitor='val_loss',
+                                                  verbose=0, save_best_only=True,
+                                                  save_weights_only=True, mode='min')
+
+
+# Learning rate schedule
+def scheduler(epoch, lr):
+    if epoch % 10 == 0:
+        lr = lr / 2
+    return lr
+
+
+lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
+
+
+# ------- THE FUNCTIONS BELOW WILL NoT be USED IN THIS PROJECT ------- #
+# ------- They Did not work with our dataset
 
 
 # Shuffle indexes of given dataset and labels
@@ -99,7 +132,3 @@ def dataset_augmentation_flip(img, lbl):
 # Augment Images in Dataset using random contrast method
 def dataset_augmentation_contrast(img, lbl):
     return tf.image.random_contrast(img, lower=0.0, upper=1.0), lbl
-
-
-tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
-
